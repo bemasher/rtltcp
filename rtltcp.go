@@ -47,8 +47,7 @@ func NewSDR(addr string) (sdr SDR, err error) {
 	return
 }
 
-// Contains the Magic number, tuner information and the number of valid gain
-// values. GainCount is .
+// Contains the Magic number, tuner information and the number of valid gain values.
 type DongleInfo struct {
 	Magic     [4]byte
 	Tuner     Tuner
