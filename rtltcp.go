@@ -1,3 +1,4 @@
+// This package provides a wrapper for the TCP protocol implemented by the rtl_tcp tool used with Realtek DVB-T based SDR's.
 package rtltcp
 
 import (
@@ -9,11 +10,15 @@ import (
 
 var DongleMagic = [...]byte{'R', 'T', 'L', '0'}
 
+// Contains dongle information and an embedded tcp connection to the spectrum server
 type SDR struct {
 	net.Conn
 	Info DongleInfo
 }
 
+// Give an address of the form "0.0.0.0:1234" connects to the spectrum server
+// at the given address or returns an error. The user is responsible for
+// closing this connection.
 func NewSDR(addr string) (sdr SDR, err error) {
 	sdr.Conn, err = net.Dial("tcp", addr)
 	if err != nil {
@@ -42,20 +47,24 @@ func NewSDR(addr string) (sdr SDR, err error) {
 	return
 }
 
+// Contains the Magic number, tuner information and the number of valid gain
+// values. GainCount is .
 type DongleInfo struct {
 	Magic     [4]byte
 	Tuner     Tuner
-	GainCount uint32
+	GainCount uint32 // Useful for setting gain by index
 }
 
 func (d DongleInfo) String() string {
 	return fmt.Sprintf("{Magic:%q Tuner:%s GainCount:%d}", d.Magic, d.Tuner, d.GainCount)
 }
 
+// Checks that the magic number received matches the expected byte string 'RTL0'.
 func (d DongleInfo) Valid() bool {
 	return d.Magic == DongleMagic
 }
 
+// Provides mapping of tuner value to tuner string.
 type Tuner uint32
 
 func (t Tuner) String() string {
@@ -74,6 +83,7 @@ type command struct {
 	Parameter uint32
 }
 
+// Command constants defined in rtl_tcp.c
 const (
 	CenterFreq = iota + 1
 	SampleRate
@@ -90,7 +100,7 @@ const (
 	GainByIndex
 )
 
-func (sdr SDR) SetFreq(freq uint32) (err error) {
+func (sdr SDR) SetCenterFreq(freq uint32) (err error) {
 	return sdr.execute(command{CenterFreq, freq})
 }
 
@@ -104,6 +114,13 @@ func (sdr SDR) SetGainMode(manual uint32) (err error) {
 
 func (sdr SDR) SetGain(gain uint32) (err error) {
 	return sdr.execute(command{TunerGain, gain})
+}
+
+func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
+	if gain > sdr.Info.GainCount {
+		return fmt.Errorf("invalid gain index: %d", gain)
+	}
+	return sdr.execute(command{GainByIndex, idx})
 }
 
 func (sdr SDR) SetFreqCorrection(ppm uint32) (err error) {
@@ -141,57 +158,6 @@ func (sdr SDR) SetRTLXtalFreq(freq uint32) (err error) {
 
 func (sdr SDR) SetTunerXtalFreq(freq uint32) (err error) {
 	return sdr.execute(command{TunerXtalFreq, freq})
-}
-
-func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
-	return sdr.execute(command{GainByIndex, idx})
-}
-
-type IQ struct {
-	I, Q byte
-}
-
-func (iq *IQ) Normalize() {
-	if iq.I >= 128 {
-		iq.I += 128
-	} else {
-		iq.I = 128 - iq.I
-	}
-
-	if iq.Q >= 128 {
-		iq.Q += 128
-	} else {
-		iq.Q = 128 - iq.Q
-	}
-}
-
-func (iq IQ) Complex() complex128 {
-	return complex((float64(iq.I)-127.5)/127.5, (float64(iq.Q)-127.5)/127.5)
-}
-
-func (sdr SDR) Sample(samples []complex128) (err error) {
-	buf := make([]IQ, len(samples))
-
-	err = sdr.SampleIQ(buf)
-	if err != nil {
-		return err
-	}
-
-	for k, iq := range buf {
-		samples[k] = iq.Complex()
-	}
-
-	return
-}
-
-func (sdr SDR) SampleIQ(samples []IQ) (err error) {
-	err = binary.Read(sdr.Conn, binary.BigEndian, &samples)
-
-	if err != nil {
-		return fmt.Errorf("Error reading samples: %s", err)
-	}
-
-	return err
 }
 
 func init() {
