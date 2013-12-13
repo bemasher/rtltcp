@@ -116,8 +116,8 @@ func (sdr SDR) SetGain(gain uint32) (err error) {
 }
 
 func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
-	if gain > sdr.Info.GainCount {
-		return fmt.Errorf("invalid gain index: %d", gain)
+	if idx > sdr.Info.GainCount {
+		return fmt.Errorf("invalid gain index: %d", idx)
 	}
 	return sdr.execute(command{GainByIndex, idx})
 }
