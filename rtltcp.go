@@ -12,15 +12,15 @@ var DongleMagic = [...]byte{'R', 'T', 'L', '0'}
 
 // Contains dongle information and an embedded tcp connection to the spectrum server
 type SDR struct {
-	net.Conn
+	*net.TCPConn
 	Info DongleInfo
 }
 
 // Give an address of the form "0.0.0.0:1234" connects to the spectrum server
 // at the given address or returns an error. The user is responsible for
 // closing this connection.
-func NewSDR(addr string) (sdr SDR, err error) {
-	sdr.Conn, err = net.Dial("tcp", addr)
+func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
+	sdr.TCPConn, err = net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		err = fmt.Errorf("Error connecting to spectrum server: %s", err)
 		return
@@ -33,7 +33,7 @@ func NewSDR(addr string) (sdr SDR, err error) {
 		}
 	}()
 
-	err = binary.Read(sdr.Conn, binary.BigEndian, &sdr.Info)
+	err = binary.Read(sdr.TCPConn, binary.BigEndian, &sdr.Info)
 	if err != nil {
 		err = fmt.Errorf("Error getting dongle information: %s", err)
 		return
@@ -74,7 +74,7 @@ func (t Tuner) String() string {
 }
 
 func (sdr SDR) execute(cmd command) (err error) {
-	return binary.Write(sdr.Conn, binary.BigEndian, cmd)
+	return binary.Write(sdr.TCPConn, binary.BigEndian, cmd)
 }
 
 type command struct {
