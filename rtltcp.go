@@ -99,22 +99,30 @@ const (
 	GainByIndex
 )
 
+// Set the center frequency in Hz.
 func (sdr SDR) SetCenterFreq(freq uint32) (err error) {
 	return sdr.execute(command{CenterFreq, freq})
 }
 
+// Set the sample rate in Hz.
 func (sdr SDR) SetSampleRate(sampleRate uint32) (err error) {
 	return sdr.execute(command{SampleRate, sampleRate})
 }
 
-func (sdr SDR) SetGainMode(manual uint32) (err error) {
-	return sdr.execute(command{TunerGainMode, manual})
-}
-
+// Set gain in tenths of dB. (197 => 19.7dB)
 func (sdr SDR) SetGain(gain uint32) (err error) {
 	return sdr.execute(command{TunerGain, gain})
 }
 
+// Set the gain mode, true for auto.
+func (sdr SDR) SetGainMode(state bool) (err error) {
+	if state {
+		return sdr.execute(command{TunerGain, 0})
+	}
+	return sdr.execute(command{TunerGain, 1})
+}
+
+// Set gain by index, must be <= DongleInfo.GainCount
 func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
 	if idx > sdr.Info.GainCount {
 		return fmt.Errorf("invalid gain index: %d", idx)
@@ -122,14 +130,17 @@ func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
 	return sdr.execute(command{GainByIndex, idx})
 }
 
+// Set frequency correction in ppm.
 func (sdr SDR) SetFreqCorrection(ppm uint32) (err error) {
 	return sdr.execute(command{FreqCorrection, ppm})
 }
 
+// Set tuner intermediate frequency stage and gain.
 func (sdr SDR) SetTunerIfGain(stage, gain uint16) (err error) {
 	return sdr.execute(command{TunerIfGain, (uint32(stage) << 16) | uint32(gain)})
 }
 
+// Set RTL AGC mode, true for enabled.
 func (sdr SDR) SetAGCMode(state bool) (err error) {
 	if state {
 		return sdr.execute(command{AGCMode, 1})
@@ -137,6 +148,7 @@ func (sdr SDR) SetAGCMode(state bool) (err error) {
 	return sdr.execute(command{AGCMode, 0})
 }
 
+// Set direct sampling mode.
 func (sdr SDR) SetDirectSampling(state bool) (err error) {
 	if state {
 		return sdr.execute(command{DirectSampling, 1})
@@ -144,6 +156,7 @@ func (sdr SDR) SetDirectSampling(state bool) (err error) {
 	return sdr.execute(command{DirectSampling, 0})
 }
 
+// Set offset tuning, true for enabled.
 func (sdr SDR) SetOffsetTuning(state bool) (err error) {
 	if state {
 		return sdr.execute(command{OffsetTuning, 1})
@@ -151,10 +164,12 @@ func (sdr SDR) SetOffsetTuning(state bool) (err error) {
 	return sdr.execute(command{OffsetTuning, 0})
 }
 
+// Set RTL xtal frequency.
 func (sdr SDR) SetRTLXtalFreq(freq uint32) (err error) {
 	return sdr.execute(command{RTLXtalFreq, freq})
 }
 
+// Set tuner xtal frequency.
 func (sdr SDR) SetTunerXtalFreq(freq uint32) (err error) {
 	return sdr.execute(command{TunerXtalFreq, freq})
 }
