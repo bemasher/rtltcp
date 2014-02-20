@@ -117,9 +117,9 @@ func (sdr SDR) SetGain(gain uint32) (err error) {
 // Set the gain mode, true for auto.
 func (sdr SDR) SetGainMode(state bool) (err error) {
 	if state {
-		return sdr.execute(command{TunerGain, 0})
+		return sdr.execute(command{TunerGainMode, 0})
 	}
-	return sdr.execute(command{TunerGain, 1})
+	return sdr.execute(command{TunerGainMode, 1})
 }
 
 // Set gain by index, must be <= DongleInfo.GainCount
