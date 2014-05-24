@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-var DongleMagic = [...]byte{'R', 'T', 'L', '0'}
+var dongleMagic = [...]byte{'R', 'T', 'L', '0'}
 
 // Contains dongle information and an embedded tcp connection to the spectrum server
 type SDR struct {
@@ -40,8 +40,7 @@ func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
 	}
 
 	if !sdr.Info.Valid() {
-		err = fmt.Errorf("Invalid magic number: expected %q received %q", DongleMagic, sdr.Info.Magic)
-
+		err = fmt.Errorf("Invalid magic number: expected %q received %q", dongleMagic, sdr.Info.Magic)
 	}
 
 	return
@@ -60,15 +59,26 @@ func (d DongleInfo) String() string {
 
 // Checks that the magic number received matches the expected byte string 'RTL0'.
 func (d DongleInfo) Valid() bool {
-	return d.Magic == DongleMagic
+	return d.Magic == dongleMagic
 }
 
 // Provides mapping of tuner value to tuner string.
 type Tuner uint32
 
 func (t Tuner) String() string {
-	if t <= 5 {
-		return []string{"UNKNOWN", "E4000", "FC0012", "FC0013", "FC2580", "R820T"}[t]
+	switch t {
+	case 1:
+		return "E4000"
+	case 2:
+		return "FC0012"
+	case 3:
+		return "FC0013"
+	case 4:
+		return "FC2580"
+	case 5:
+		return "R820T"
+	case 6:
+		return "R828D"
 	}
 	return "UNKNOWN"
 }
