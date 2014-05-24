@@ -94,42 +94,42 @@ type command struct {
 
 // Command constants defined in rtl_tcp.c
 const (
-	CenterFreq = iota + 1
-	SampleRate
-	TunerGainMode
-	TunerGain
-	FreqCorrection
-	TunerIfGain
-	TestMode
-	AGCMode
-	DirectSampling
-	OffsetTuning
-	RTLXtalFreq
-	TunerXtalFreq
-	GainByIndex
+	centerFreq = iota + 1
+	sampleRate
+	tunerGainMode
+	tunerGain
+	freqCorrection
+	tunerIfGain
+	testMode
+	agcMode
+	directSampling
+	offsetTuning
+	rtlXtalFreq
+	tunerXtalFreq
+	gainByIndex
 )
 
 // Set the center frequency in Hz.
 func (sdr SDR) SetCenterFreq(freq uint32) (err error) {
-	return sdr.execute(command{CenterFreq, freq})
+	return sdr.execute(command{centerFreq, freq})
 }
 
 // Set the sample rate in Hz.
 func (sdr SDR) SetSampleRate(sampleRate uint32) (err error) {
-	return sdr.execute(command{SampleRate, sampleRate})
+	return sdr.execute(command{sampleRate, sampleRate})
 }
 
 // Set gain in tenths of dB. (197 => 19.7dB)
 func (sdr SDR) SetGain(gain uint32) (err error) {
-	return sdr.execute(command{TunerGain, gain})
+	return sdr.execute(command{tunerGain, gain})
 }
 
 // Set the gain mode, true for auto.
 func (sdr SDR) SetGainMode(state bool) (err error) {
 	if state {
-		return sdr.execute(command{TunerGainMode, 0})
+		return sdr.execute(command{tunerGainMode, 0})
 	}
-	return sdr.execute(command{TunerGainMode, 1})
+	return sdr.execute(command{tunerGainMode, 1})
 }
 
 // Set gain by index, must be <= DongleInfo.GainCount
@@ -137,51 +137,59 @@ func (sdr SDR) SetGainByIndex(idx uint32) (err error) {
 	if idx > sdr.Info.GainCount {
 		return fmt.Errorf("invalid gain index: %d", idx)
 	}
-	return sdr.execute(command{GainByIndex, idx})
+	return sdr.execute(command{gainByIndex, idx})
 }
 
 // Set frequency correction in ppm.
 func (sdr SDR) SetFreqCorrection(ppm uint32) (err error) {
-	return sdr.execute(command{FreqCorrection, ppm})
+	return sdr.execute(command{freqCorrection, ppm})
 }
 
 // Set tuner intermediate frequency stage and gain.
 func (sdr SDR) SetTunerIfGain(stage, gain uint16) (err error) {
-	return sdr.execute(command{TunerIfGain, (uint32(stage) << 16) | uint32(gain)})
+	return sdr.execute(command{tunerIfGain, (uint32(stage) << 16) | uint32(gain)})
+}
+
+// Set test mode, true for enabled.
+func (sdr SDR) SetTestMode(state bool) (err error) {
+	if state {
+		return sdr.execute(command{testMode, 1})
+	}
+	return sdr.execute(command{testMode, 0})
 }
 
 // Set RTL AGC mode, true for enabled.
 func (sdr SDR) SetAGCMode(state bool) (err error) {
 	if state {
-		return sdr.execute(command{AGCMode, 1})
+		return sdr.execute(command{agcMode, 1})
 	}
-	return sdr.execute(command{AGCMode, 0})
+	return sdr.execute(command{agcMode, 0})
 }
 
 // Set direct sampling mode.
 func (sdr SDR) SetDirectSampling(state bool) (err error) {
 	if state {
-		return sdr.execute(command{DirectSampling, 1})
+		return sdr.execute(command{directSampling, 1})
 	}
-	return sdr.execute(command{DirectSampling, 0})
+	return sdr.execute(command{directSampling, 0})
 }
 
 // Set offset tuning, true for enabled.
 func (sdr SDR) SetOffsetTuning(state bool) (err error) {
 	if state {
-		return sdr.execute(command{OffsetTuning, 1})
+		return sdr.execute(command{offsetTuning, 1})
 	}
-	return sdr.execute(command{OffsetTuning, 0})
+	return sdr.execute(command{offsetTuning, 0})
 }
 
 // Set RTL xtal frequency.
 func (sdr SDR) SetRTLXtalFreq(freq uint32) (err error) {
-	return sdr.execute(command{RTLXtalFreq, freq})
+	return sdr.execute(command{rtlXtalFreq, freq})
 }
 
 // Set tuner xtal frequency.
 func (sdr SDR) SetTunerXtalFreq(freq uint32) (err error) {
-	return sdr.execute(command{TunerXtalFreq, freq})
+	return sdr.execute(command{tunerXtalFreq, freq})
 }
 
 func init() {
