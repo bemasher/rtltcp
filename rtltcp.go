@@ -115,8 +115,8 @@ func (sdr SDR) SetCenterFreq(freq uint32) (err error) {
 }
 
 // Set the sample rate in Hz.
-func (sdr SDR) SetSampleRate(sampleRate uint32) (err error) {
-	return sdr.execute(command{sampleRate, sampleRate})
+func (sdr SDR) SetSampleRate(rate uint32) (err error) {
+	return sdr.execute(command{sampleRate, rate})
 }
 
 // Set gain in tenths of dB. (197 => 19.7dB)
