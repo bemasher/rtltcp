@@ -124,7 +124,7 @@ func (sdr SDR) SetGain(gain uint32) (err error) {
 	return sdr.execute(command{tunerGain, gain})
 }
 
-// Set the gain mode, true for auto.
+// Set the Tuner AGC, true to enable.
 func (sdr SDR) SetGainMode(state bool) (err error) {
 	if state {
 		return sdr.execute(command{tunerGainMode, 0})
