@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
 
 var dongleMagic = [...]byte{'R', 'T', 'L', '0'}
@@ -49,6 +50,8 @@ func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
 }
 
 type Flags struct {
+	*flag.FlagSet
+
 	CenterFreq     uint
 	SampleRate     uint
 	TunerGainMode  bool
@@ -65,20 +68,20 @@ type Flags struct {
 
 // Registers command line flags for rtltcp commands.
 func (sdr *SDR) RegisterFlags() {
-	flag.UintVar(&sdr.Flags.CenterFreq, "centerfreq", 100e6, "center frequency to receive on")
-	flag.UintVar(&sdr.Flags.SampleRate, "samplerate", 2.4e6, "sample rate")
-	flag.BoolVar(&sdr.Flags.TunerGainMode, "tunergainmode", true, "enable/disable tuner gain")
-	flag.Float64Var(&sdr.Flags.TunerGain, "tunergain", 0.0, "set tuner gain in dB")
-	flag.IntVar(&sdr.Flags.FreqCorrection, "freqcorrection", 0, "frequency correction in ppm")
-	flag.BoolVar(&sdr.Flags.TestMode, "testmode", false, "enable/disable test mode")
-	flag.BoolVar(&sdr.Flags.AgcMode, "agcmode", false, "enable/disable rtl agc")
-	flag.BoolVar(&sdr.Flags.DirectSampling, "directsampling", false, "enable/disable direct sampling")
-	flag.BoolVar(&sdr.Flags.OffsetTuning, "offsettuning", false, "enable/disable offset tuning")
-	flag.UintVar(&sdr.Flags.RtlXtalFreq, "rtlxtalfreq", 0, "set rtl xtal frequency")
-	flag.UintVar(&sdr.Flags.TunerXtalFreq, "tunerxtalfreq", 0, "set tuner xtal frequency")
-	flag.UintVar(&sdr.Flags.GainByIndex, "gainbyindex", 0, "set gain by index")
+	sdr.Flags.FlagSet = flag.NewFlagSet("rtltcp", flag.ExitOnError)
 
-	log.Println("CenterFreq:", sdr.Flags.CenterFreq)
+	sdr.Flags.UintVar(&sdr.Flags.CenterFreq, "centerfreq", 100e6, "center frequency to receive on")
+	sdr.Flags.UintVar(&sdr.Flags.SampleRate, "samplerate", 2.4e6, "sample rate")
+	sdr.Flags.BoolVar(&sdr.Flags.TunerGainMode, "tunergainmode", true, "enable/disable tuner gain")
+	sdr.Flags.Float64Var(&sdr.Flags.TunerGain, "tunergain", 0.0, "set tuner gain in dB")
+	sdr.Flags.IntVar(&sdr.Flags.FreqCorrection, "freqcorrection", 0, "frequency correction in ppm")
+	sdr.Flags.BoolVar(&sdr.Flags.TestMode, "testmode", false, "enable/disable test mode")
+	sdr.Flags.BoolVar(&sdr.Flags.AgcMode, "agcmode", false, "enable/disable rtl agc")
+	sdr.Flags.BoolVar(&sdr.Flags.DirectSampling, "directsampling", false, "enable/disable direct sampling")
+	sdr.Flags.BoolVar(&sdr.Flags.OffsetTuning, "offsettuning", false, "enable/disable offset tuning")
+	sdr.Flags.UintVar(&sdr.Flags.RtlXtalFreq, "rtlxtalfreq", 0, "set rtl xtal frequency")
+	sdr.Flags.UintVar(&sdr.Flags.TunerXtalFreq, "tunerxtalfreq", 0, "set tuner xtal frequency")
+	sdr.Flags.UintVar(&sdr.Flags.GainByIndex, "gainbyindex", 0, "set gain by index")
 }
 
 // Parses flags and executes commands associated with each flag. Should only
@@ -91,11 +94,18 @@ func (sdr SDR) HandleFlags() (err error) {
 		}
 	}()
 
-	log.Println("CenterFreq:", sdr.Flags.CenterFreq)
+	// If we've already parsed these flags, exit.
+	if sdr.Flags.Parsed() {
+		return
+	}
 
-	flag.Visit(func(f *flag.Flag) {
+	err = sdr.Flags.Parse(os.Args[1:])
+	if err != nil {
+		return
+	}
+
+	sdr.Flags.Visit(func(f *flag.Flag) {
 		var err error
-		log.Println("Visiting:", f.Name)
 		switch f.Name {
 		case "samplerate":
 			err = sdr.SetSampleRate(uint32(sdr.Flags.SampleRate))
