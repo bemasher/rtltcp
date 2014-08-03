@@ -96,7 +96,7 @@ func (sdr *SDR) RegisterFlags() {
 
 // Parses flags and executes commands associated with each flag. Should only
 // be called once connected to rtl_tcp.
-func (sdr SDR) HandleFlags(args []string) (err error) {
+func (sdr SDR) HandleFlags() (err error) {
 	// Catch any errors panicked while visiting flags.
 	defer func() {
 		if r := recover(); r != nil {
