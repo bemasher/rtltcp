@@ -104,16 +104,6 @@ func (sdr SDR) HandleFlags(args []string) (err error) {
 		}
 	}()
 
-	// If we've already parsed these flags, exit.
-	if sdr.Flags.Parsed() {
-		return
-	}
-
-	err = sdr.Flags.Parse(args)
-	if err != nil {
-		return
-	}
-
 	sdr.Flags.Visit(func(f *flag.Flag) {
 		var err error
 		switch f.Name {
@@ -147,7 +137,7 @@ func (sdr SDR) HandleFlags(args []string) (err error) {
 		}
 	})
 
-	// Must always set center frequency.
+	// Always set center frequency.
 	err = sdr.SetCenterFreq(uint32(sdr.Flags.CenterFreq))
 
 	return
