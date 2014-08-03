@@ -19,10 +19,19 @@ type SDR struct {
 	Info  DongleInfo
 }
 
-// Give an address of the form "0.0.0.0:1234" connects to the spectrum server
-// at the given address or returns an error. The user is responsible for
-// closing this connection.
+// Give an address of the form "127.0.0.1:1234" connects to the spectrum
+// server at the given address or returns an error. The user is responsible
+// for closing this connection. If addr is nil, use "127.0.0.1:1234" or
+// command line flag value.
 func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
+	if addr == nil {
+		// Parse and resolve rtl_tcp server address.
+		addr, err = net.ResolveTCPAddr("tcp", sdr.Flags.ServerAddr)
+		if err != nil {
+			return
+		}
+	}
+
 	sdr.TCPConn, err = net.DialTCP("tcp", nil, addr)
 	if err != nil {
 		err = fmt.Errorf("Error connecting to spectrum server: %s", err)
@@ -52,6 +61,7 @@ func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
 type Flags struct {
 	*flag.FlagSet
 
+	ServerAddr     string
 	CenterFreq     uint
 	SampleRate     uint
 	TunerGainMode  bool
@@ -70,6 +80,7 @@ type Flags struct {
 func (sdr *SDR) RegisterFlags() {
 	sdr.Flags.FlagSet = flag.NewFlagSet("rtltcp", flag.ExitOnError)
 
+	sdr.Flags.StringVar(&sdr.Flags.ServerAddr, "server", "127.0.0.1:1234", "address or hostname of rtl_tcp instance")
 	sdr.Flags.UintVar(&sdr.Flags.CenterFreq, "centerfreq", 100e6, "center frequency to receive on")
 	sdr.Flags.UintVar(&sdr.Flags.SampleRate, "samplerate", 2.4e6, "sample rate")
 	sdr.Flags.BoolVar(&sdr.Flags.TunerGainMode, "tunergainmode", true, "enable/disable tuner gain")
