@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 )
 
 var dongleMagic = [...]byte{'R', 'T', 'L', '0'}
@@ -78,7 +77,7 @@ type Flags struct {
 
 // Registers command line flags for rtltcp commands.
 func (sdr *SDR) RegisterFlags() {
-	sdr.Flags.FlagSet = flag.NewFlagSet("rtltcp", flag.ExitOnError)
+	sdr.Flags.FlagSet = flag.NewFlagSet("rtltcp", flag.ContinueOnError)
 
 	sdr.Flags.StringVar(&sdr.Flags.ServerAddr, "server", "127.0.0.1:1234", "address or hostname of rtl_tcp instance")
 	sdr.Flags.UintVar(&sdr.Flags.CenterFreq, "centerfreq", 100e6, "center frequency to receive on")
@@ -97,7 +96,7 @@ func (sdr *SDR) RegisterFlags() {
 
 // Parses flags and executes commands associated with each flag. Should only
 // be called once connected to rtl_tcp.
-func (sdr SDR) HandleFlags() (err error) {
+func (sdr SDR) HandleFlags(args []string) (err error) {
 	// Catch any errors panicked while visiting flags.
 	defer func() {
 		if r := recover(); r != nil {
@@ -110,7 +109,7 @@ func (sdr SDR) HandleFlags() (err error) {
 		return
 	}
 
-	err = sdr.Flags.Parse(os.Args[1:])
+	err = sdr.Flags.Parse(args)
 	if err != nil {
 		return
 	}
