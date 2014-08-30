@@ -107,6 +107,10 @@ func (sdr SDR) HandleFlags() (err error) {
 	flag.CommandLine.Visit(func(f *flag.Flag) {
 		var err error
 		switch f.Name {
+		case "centerfreq":
+			err = sdr.SetCenterFreq(sdr.Flags.CenterFreq)
+		case "samplerate":
+			err = sdr.SetSampleRate(sdr.Flags.SampleRate)
 		case "tunergainmode":
 			err = sdr.SetGainMode(sdr.Flags.TunerGainMode)
 		case "tunergain":
