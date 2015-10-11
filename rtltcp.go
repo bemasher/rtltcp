@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/bemasher/rtltcp/si"
 )
 
 var dongleMagic = [...]byte{'R', 'T', 'L', '0'}
@@ -63,8 +65,8 @@ func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
 
 type Flags struct {
 	ServerAddr     string
-	CenterFreq     uint
-	SampleRate     uint
+	CenterFreq     si.ScientificNotation
+	SampleRate     si.ScientificNotation
 	TunerGainMode  bool
 	TunerGain      float64
 	FreqCorrection int
@@ -80,8 +82,10 @@ type Flags struct {
 // Registers command line flags for rtltcp commands.
 func (sdr *SDR) RegisterFlags() {
 	flag.StringVar(&sdr.Flags.ServerAddr, "server", "127.0.0.1:1234", "address or hostname of rtl_tcp instance")
-	flag.UintVar(&sdr.Flags.CenterFreq, "centerfreq", 100e6, "center frequency to receive on")
-	flag.UintVar(&sdr.Flags.SampleRate, "samplerate", 2.4e6, "sample rate")
+	flag.Var(&sdr.Flags.CenterFreq, "centerfreq", "center frequency to receive on")
+	flag.Lookup("centerfreq").DefValue = "100M"
+	flag.Var(&sdr.Flags.SampleRate, "samplerate", "sample rate")
+	flag.Lookup("samplerate").DefValue = "2.4M"
 	flag.BoolVar(&sdr.Flags.TunerGainMode, "tunergainmode", false, "enable/disable tuner gain")
 	flag.Float64Var(&sdr.Flags.TunerGain, "tunergain", 0.0, "set tuner gain in dB")
 	flag.IntVar(&sdr.Flags.FreqCorrection, "freqcorrection", 0, "frequency correction in ppm")
