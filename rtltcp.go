@@ -26,19 +26,19 @@ type SDR struct {
 // for closing this connection. If addr is nil, use "127.0.0.1:1234" or
 // command line flag value.
 func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
+	// using local var here so that something can be passed in an used other
+	//  than what is set in sdr.Flags.ServerAddr in case that is required
+	var conn_addr string
 	if addr == nil {
 		if sdr.Flags.ServerAddr == "" {
 			sdr.Flags.ServerAddr = "127.0.0.1:1234"
 		}
-
-		// Parse and resolve rtl_tcp server address.
-		addr, err = net.ResolveTCPAddr("tcp", sdr.Flags.ServerAddr)
-		if err != nil {
-			return
-		}
+		conn_addr = sdr.Flags.ServerAddr
+	} else {
+		conn_addr = fmt.Sprintf("%s:%d", addr.IP, addr.Port)
 	}
 
-	sdr.Conn, err = net.DialTimeout("tcp", sdr.Flags.ServerAddr, sdr.Flags.ConnectTimeout)
+	sdr.Conn, err = net.DialTimeout("tcp", conn_addr, sdr.Flags.ConnectTimeout)
 	if err != nil {
 		err = fmt.Errorf("Error connecting to spectrum server: %s", err)
 		return
