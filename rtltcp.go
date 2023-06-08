@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"time"
 	"net"
 
 	"github.com/bemasher/rtltcp/si"
@@ -15,7 +16,7 @@ var dongleMagic = [...]byte{'R', 'T', 'L', '0'}
 
 // Contains dongle information and an embedded tcp connection to the spectrum server
 type SDR struct {
-	*net.TCPConn
+	net.Conn
 	Flags Flags
 	Info  DongleInfo
 }
@@ -25,19 +26,19 @@ type SDR struct {
 // for closing this connection. If addr is nil, use "127.0.0.1:1234" or
 // command line flag value.
 func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
+	// using local var here so that something can be passed in an used other
+	//  than what is set in sdr.Flags.ServerAddr in case that is required
+	var conn_addr string
 	if addr == nil {
 		if sdr.Flags.ServerAddr == "" {
 			sdr.Flags.ServerAddr = "127.0.0.1:1234"
 		}
-
-		// Parse and resolve rtl_tcp server address.
-		addr, err = net.ResolveTCPAddr("tcp", sdr.Flags.ServerAddr)
-		if err != nil {
-			return
-		}
+		conn_addr = sdr.Flags.ServerAddr
+	} else {
+		conn_addr = fmt.Sprintf("%s:%d", addr.IP, addr.Port)
 	}
 
-	sdr.TCPConn, err = net.DialTCP("tcp", nil, addr)
+	sdr.Conn, err = net.DialTimeout("tcp", conn_addr, sdr.Flags.ConnectTimeout)
 	if err != nil {
 		err = fmt.Errorf("Error connecting to spectrum server: %s", err)
 		return
@@ -50,7 +51,7 @@ func (sdr *SDR) Connect(addr *net.TCPAddr) (err error) {
 		}
 	}()
 
-	err = binary.Read(sdr.TCPConn, binary.BigEndian, &sdr.Info)
+	err = binary.Read(sdr.Conn, binary.BigEndian, &sdr.Info)
 	if err != nil {
 		err = fmt.Errorf("Error getting dongle information: %s", err)
 		return
@@ -77,6 +78,7 @@ type Flags struct {
 	RtlXtalFreq    uint
 	TunerXtalFreq  uint
 	GainByIndex    uint
+	ConnectTimeout time.Duration
 }
 
 // Registers command line flags for rtltcp commands.
@@ -96,6 +98,7 @@ func (sdr *SDR) RegisterFlags() {
 	flag.UintVar(&sdr.Flags.RtlXtalFreq, "rtlxtalfreq", 0, "set rtl xtal frequency")
 	flag.UintVar(&sdr.Flags.TunerXtalFreq, "tunerxtalfreq", 0, "set tuner xtal frequency")
 	flag.UintVar(&sdr.Flags.GainByIndex, "gainbyindex", 0, "set gain by index")
+	flag.DurationVar(&sdr.Flags.ConnectTimeout, "connecttimeout", 0, "set a Duration as a connection timeout 0 for infinite")
 }
 
 // Parses flags and executes commands associated with each flag. Should only
@@ -184,7 +187,7 @@ func (t Tuner) String() string {
 }
 
 func (sdr SDR) execute(cmd command) (err error) {
-	return binary.Write(sdr.TCPConn, binary.BigEndian, cmd)
+	return binary.Write(sdr.Conn, binary.BigEndian, cmd)
 }
 
 type command struct {
