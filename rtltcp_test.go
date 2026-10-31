@@ -7,7 +7,7 @@ import (
 	"net"
 )
 
-func Example_sDR() {
+func ExampleSDR() {
 	var sdr SDR
 
 	// Resolve address, this may be ip:port or hostname:port.
