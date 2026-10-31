@@ -17,7 +17,9 @@ func ExampleSDR() {
 	}
 
 	// Connect to address and defer close.
-	sdr.Connect(addr)
+	if err := sdr.Connect(addr); err != nil {
+		log.Fatal("Error connecting:", err)
+	}
 	defer sdr.Close()
 
 	// Print dongle info.
@@ -34,5 +36,4 @@ func ExampleSDR() {
 	}
 
 	// Do something with data in buf...
-
 }
